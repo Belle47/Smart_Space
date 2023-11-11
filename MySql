@@ -1,0 +1,50 @@
+CREATE DATABASE Smart_Estacionamento;
+USE Smart_Estacionamento;
+       
+CREATE TABLE Vagas (
+    ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    TotalVagas INT NOT NULL, 
+    OcupadasLivresMensalistas INT NOT NULL,
+	StatusVagas VARCHAR(1) NOT NULL 
+);
+
+CREATE TABLE ClienteConvenio (
+    Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    Nome VARCHAR(45) NOT NULL,
+    TelefoneCelular VARCHAR(15) NOT NULL,
+    CPF VARCHAR(24) NOT NULL,
+    NumCarteirinha varchar(255) NOT NULL
+);
+
+
+CREATE TABLE ClienteRotativo (
+    Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    Nome VARCHAR(45) NOT NULL,
+    TelefoneCelular VARCHAR(15) NOT NULL
+);
+
+CREATE TABLE  Ticket (
+ID INT NOT NULL AUTO_INCREMENT,
+HoraEntrada TIME NOT NULL,
+HoraSaida TIME NOT NULL,
+Valor DOUBLE NOT NULL
+);
+
+CREATE TABLE Veiculos (
+    ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	Placa VARCHAR (32)NOT NULL,
+    Tipo_Veiculo VARCHAR (32) NOT NULL,
+    FOREIGN KEY (ID_Cliente) REFERENCES Cliente(Id)
+ );
+ 
+ CREATE TABLE Valores (
+ ID INT NOT NULL AUTO_INCREMENT,
+ TempoEstacionado TIME NOT NULL
+ );
+
+CREATE TABLE Pagamento(
+    ID int NOT NULL PRIMARY KEY,
+    DataPagamento DATE NOT NULL,
+    Valor DOUBLE NOT NULL,
+    NotaFiscal INT NOT NULL
+);
