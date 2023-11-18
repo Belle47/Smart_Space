@@ -1,5 +1,5 @@
-CREATE DATABASE Smart_Estacionamento;
-USE Smart_Estacionamento;
+CREATE DATABASE IF NOT EXISTS Smart_Estaciona;
+USE Smart_Estaciona;
 
 CREATE TABLE Vagas (
     ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -22,19 +22,21 @@ CREATE TABLE ClienteRotativo (
     TelefoneCelular VARCHAR(15) NOT NULL
 );
 
-CREATE TABLE Ticket (
-    ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    HoraEntrada TIME NOT NULL,
-    HoraSaida TIME NOT NULL,
-    Valor DOUBLE NOT NULL
-);
-
 CREATE TABLE Veiculos (
     ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     Placa VARCHAR(32) NOT NULL,
     Tipo_Veiculo VARCHAR(32) NOT NULL,
-    ID_Cliente INT, -- Added ID_Cliente column
+    ID_Cliente INT,
     FOREIGN KEY (ID_Cliente) REFERENCES ClienteConvenio(Id) 
+);
+
+CREATE TABLE Ticket (
+    ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    HoraEntrada TIME NOT NULL,
+    HoraSaida TIME NOT NULL,
+    Valor DOUBLE NOT NULL,
+    ID_Cliente INT, 
+    FOREIGN KEY (ID_Cliente) REFERENCES Veiculos(ID)
 );
 
 CREATE TABLE Valores (
@@ -46,16 +48,12 @@ CREATE TABLE Pagamento (
     ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     DataPagamento DATE NOT NULL,
     Valor DOUBLE NOT NULL,
-    NotaFiscal INT NOT NULL
+    NotaFiscal INT NOT NULL,
+    ID_Ticket INT, 
+    FOREIGN KEY (ID_Ticket) REFERENCES Ticket(ID)
 );
 
-ALTER TABLE Ticket
-ADD FOREIGN KEY (ID_Veiculo) REFERENCES Veiculos(ID);
-
-ALTER TABLE Pagamento
-ADD FOREIGN KEY (ID_Ticket) REFERENCES Ticket(ID);
-
-//Inserts
+-- INSERTS --
 
 INSERT INTO Vagas (TotalVagas, OcupadasLivresMensalistas, StatusVagas) VALUES (100, 20, 'A');
 
@@ -69,9 +67,9 @@ INSERT INTO Veiculos (Placa, Tipo_Veiculo, ID_Cliente) VALUES ('ABC123', 'Carro'
 
 INSERT INTO Valores (TempoEstacionado) VALUES ('02:30:00');
 
-INSERT INTO Pagamento (DataPagamento, Valor, NotaFiscal) VALUES ('2023-11-17', 15.50, 001);
+INSERT INTO Pagamento (DataPagamento, Valor, NotaFiscal) VALUES ('2023-11-17', 15.50, '001'); -- Enclosed NotaFiscal in single quotes
 
-//Updates
+-- UPDATES --
 
 UPDATE Vagas SET OcupadasLivresMensalistas = 25 WHERE ID = 1;
 
@@ -81,7 +79,7 @@ UPDATE Ticket SET HoraSaida = '15:00:00', Valor = 18.75 WHERE ID = 1;
 
 UPDATE Veiculos SET Tipo_Veiculo = 'SUV' WHERE ID = 1;
 
-//View
+-- VIEWS --
 
 CREATE VIEW TicketView AS
 SELECT
@@ -92,7 +90,10 @@ SELECT
     Veiculos.Placa,
     Veiculos.Tipo_Veiculo
 FROM Ticket
-JOIN Veiculos ON Ticket.ID_Veiculo = Veiculos.ID;
+JOIN Veiculos ON Ticket.ID = Veiculos.ID;
+
+
+DELIMITER //
 
 CREATE TRIGGER AfterInsertTicket
 AFTER INSERT ON Ticket
@@ -100,8 +101,11 @@ FOR EACH ROW
 BEGIN
     UPDATE Vagas
     SET OcupadasLivresMensalistas = OcupadasLivresMensalistas + 1
-    WHERE ID = 1; -- Assuming you want to update a specific row in Vagas table
+    WHERE ID = 1;
 END;
+//
+
+-- TRIGGER --
 
 CREATE TRIGGER AfterUpdateTicketPayment
 AFTER UPDATE ON Ticket
@@ -109,12 +113,13 @@ FOR EACH ROW
 BEGIN
     IF NEW.Valor = 0 AND OLD.Valor > 0 THEN
         INSERT INTO Pagamento (ID_Ticket, DataPagamento, Valor, NotaFiscal)
-        VALUES (NEW.ID, NOW(), OLD.Valor, 002); -- Adjust NotaFiscal value accordingly
+        VALUES (NEW.ID, NOW(), OLD.Valor, '002'); 
     END IF;
 END;
 
-//Indeção
+DELIMITER ;
 
+-- INDEX --
 
 CREATE INDEX idx_Placa ON Veiculos (Placa);
 CREATE INDEX idx_CPF ON ClienteConvenio (CPF) USING HASH;
